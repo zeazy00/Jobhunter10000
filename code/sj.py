@@ -1,4 +1,6 @@
+import os
 import requests
+from dotenv import load_dotenv
 from pprint import pprint
 
 from common import get_language_statistics
@@ -10,8 +12,9 @@ def get_sj_vacancies(language):
     vacancy_pages = 1
     vacancies_processed  = 0
     all_salary  = 0
+    load_dotenv()
     headers = {
-        "X-Api-App-Id": "v3.r.137011005.659f24a14955a12492923094f0dfd81f0d645363.075ab26707f01a16824d294502386a1cb7234037"
+        "X-Api-App-Id": os.getenv("TOKEN")
     }
     while vacancy_page < vacancy_pages:
         count = 100
