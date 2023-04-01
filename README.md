@@ -18,6 +18,8 @@ pip install -r requirements.txt
 ```
 unnamed_User\Jobhunter10000> env\Scripts\activate
 unnamed_User\Jobhunter10000> python code\main.py
+
+
 ┌HeahHunter vacancies─────────────────┬─────────────────────┬────────────────┐
 │ language          │ vacancies found │ vacancies processed │ average salary │
 ├───────────────────┼─────────────────┼─────────────────────┼────────────────┤
