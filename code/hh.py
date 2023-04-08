@@ -1,41 +1,37 @@
 import requests
 
-from common import get_language_statistics
+from common import format_statistics, predict_rub_salary
 
 
-def get_hh_vacancies(language):
+def get_hh_statistics(language):
     url = 'https://api.hh.ru/vacancies'
     vacancy_page = 0
     vacancy_pages = 1
     vacancies_processed  = 0
     all_salary  = 0
+    moscow_id = 1
+    period_in_days = 30
+    per_page = 100
     while vacancy_page < vacancy_pages:
         params = {
         "text": f"Программист {language}",
-        "area": 1,
-        "period": 30,
-        "per_page": 100,
+        "area": moscow_id,
+        "period": period_in_days,
+        "per_page": per_page,
         "page": vacancy_page
         }
         response = requests.get(url, params=params)
         response.raise_for_status()
         vacancies = response.json()
         for vacancy in vacancies["items"]:
-            predicted_salary = predict_rub_salary(vacancy)
+            if vacancy['salary'] and vacancy['salary']['currency'] == 'RUR':
+                predicted_salary = predict_rub_salary(vacancy['salary']['from'], vacancy['salary']['to'])
+            else:
+                predicted_salary = None
             if predicted_salary:
-                vacancies_processed +=1
+                vacancies_processed += 1
                 all_salary += predicted_salary
-        vacancy_page+=1
+        vacancy_page += 1
         vacancy_pages = vacancies["pages"]
 
-    return get_language_statistics(all_salary ,vacancies_processed, vacancies["found"])
-
-
-def predict_rub_salary(vacancy):
-    if vacancy['salary'] and vacancy['salary']['currency'] == 'RUR':
-        if vacancy['salary']['from'] and vacancy['salary']['to']:
-            return((vacancy['salary']['from']+vacancy['salary']['to'])/2)
-        elif vacancy['salary']['from']:
-            return(vacancy['salary']['from']*1.2)
-        elif vacancy['salary']['to']:
-            return(vacancy['salary']['to']*0.8)
+    return all_salary, vacancies_processed, vacancies["found"]

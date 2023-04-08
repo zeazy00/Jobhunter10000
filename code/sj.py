@@ -1,49 +1,41 @@
-import os
 import requests
-from dotenv import load_dotenv
 from pprint import pprint
 
-from common import get_language_statistics
+from common import format_statistics, predict_rub_salary
 
 
-def get_sj_vacancies(language):
+def get_sj_statistics(language, token):
     url = 'https://api.superjob.ru/2.0/vacancies/'
     vacancy_page = 0
     vacancy_pages = 1
     vacancies_processed  = 0
     all_salary  = 0
-    load_dotenv()
+    specialization = 48
     headers = {
-        "X-Api-App-Id": os.getenv("TOKEN")
+        "X-Api-App-Id": token
     }
     while vacancy_page < vacancy_pages:
         count = 100
+        moscow_id = 4
         params = {
             "keyword": language,
-            "town": "4",
+            "town": moscow_id,
             "count": count,
             "page": vacancy_page,
-            "catalogues": 48,
+            "catalogues": specialization,
             "currency": "rub"
         }
         response = requests.get(url, params=params, headers=headers)
         response.raise_for_status()
         vacancies = response.json()
         for vacancy in vacancies['objects']:
-            predicted_salary = predict_rub_salary(vacancy)
+            predicted_salary = predict_rub_salary(vacancy['payment_from'], vacancy['payment_to'])
             if predicted_salary:
                 vacancies_processed +=1
                 all_salary += predicted_salary
         vacancy_page+=1
         vacancy_pages = vacancies['total']/count
 
-    return get_language_statistics(all_salary, vacancies_processed, vacancies['total'])
+    return all_salary, vacancies_processed, vacancies['total']
 
 
-def predict_rub_salary(vacancy):
-    if vacancy.get('payment_from') and vacancy.get('payment_to'):
-        return((vacancy.get('payment_from')+vacancy.get('payment_to'))/2)
-    elif vacancy.get('payment_from'):
-        return(vacancy.get('payment_from')*1.2)
-    elif vacancy.get('payment_to'):
-        return(vacancy.get('payment_to')*0.8)
